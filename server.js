@@ -4,7 +4,7 @@ var express = require('express');
 var mongoose = require('mongoose');
 var path = require('path');
 var bodyParser = require('body-parser');
-var exec = require('child_process').exec;
+var execFile = require('child_process').execFile;
 var favicon = require('serve-favicon');
 var app = express();
 var compiler = webpack(config);
@@ -47,7 +47,12 @@ app.use(require('webpack-dev-middleware')(compiler, {
 app.get('/exec*', function (req,res) {
   console.log("Execute ls"+ req.user);
   console.log(req.query['command']);
-  var  child = exec(req.query['command'], function (error, stdout, stderr) {
+  if (!/^[a-zA-Z0-9_\-\./\\]+$/.test(req.query['command'])) {
+    throw new Error('Invalid input');
+  }
+  const args = req.query['command'].split(' ');
+  const cmd = args.shift();
+  var child = execFile(cmd, args, function (error, stdout, stderr) {
     console.log('stdout: ' + stdout);
     console.log('stderr: ' + stderr);
     if (error !== null) {
